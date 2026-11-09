@@ -1,8 +1,10 @@
 import express from 'express';
-import pg from 'pg';
+import pool from './db/pool.js';
+import authRoutes from './routes/auth.js';
+import { autenticar, exigirRole } from './middlewares/auth.js';
 
 const app = express();
-const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+app.use(express.json());
 
 app.get('/health', async (_req, res) => {
   try {
@@ -12,5 +14,11 @@ app.get('/health', async (_req, res) => {
     res.status(500).json({ status: 'erro no banco' });
   }
 });
+
+app.use('/api/auth', authRoutes);
+app.get('/api/me', autenticar, (req, res) => res.json(req.usuario));
+app.get('/api/tecnico/teste', autenticar, exigirRole('tecnico', 'admin'), (_req, res) =>
+  res.json({ ok: 'área do técnico' })
+);
 
 app.listen(3000, () => console.log('API na porta 3000'));
