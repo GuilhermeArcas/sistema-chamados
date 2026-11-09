@@ -1,6 +1,7 @@
 import express from 'express';
 import pool from './db/pool.js';
 import authRoutes from './routes/auth.js';
+import ticketRoutes from './routes/tickets.js';
 import { autenticar, exigirRole } from './middlewares/auth.js';
 
 const app = express();
@@ -20,5 +21,11 @@ app.get('/api/me', autenticar, (req, res) => res.json(req.usuario));
 app.get('/api/tecnico/teste', autenticar, exigirRole('tecnico', 'admin'), (_req, res) =>
   res.json({ ok: 'área do técnico' })
 );
+
+app.get('/api/categorias', autenticar, async (_req, res) => {
+  const { rows } = await pool.query('select id, nome from categories order by nome');
+  res.json(rows);
+});
+app.use('/api/tickets', ticketRoutes);
 
 app.listen(3000, () => console.log('API na porta 3000'));
